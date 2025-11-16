@@ -1,8 +1,9 @@
-from flask import Flask, render_template, redirect, url_for
+from flask import Flask, render_template, redirect, url_for, session
 from threading import Lock
 import os
 
 app = Flask(__name__)
+app.secret_key = "qwertz123"  # Unbedingt ändern!
 
 current_number = 0
 next_number = 1
@@ -26,9 +27,16 @@ def customer():
 @app.route("/take_number")
 def take_number():
     global next_number
-    with lock:
-        ticket = next_number
-        next_number += 1
+
+    # Prüfen, ob der Nutzer schon eine Nummer gezogen hat
+    if 'ticket' in session:
+        ticket = session['ticket']
+    else:
+        with lock:
+            ticket = next_number
+            next_number += 1
+        session['ticket'] = ticket  # Nummer in Session speichern
+
     return render_template("take_number.html", ticket=ticket)
 
 
@@ -39,14 +47,13 @@ def take_number():
 def admin():
     global current_number, next_number
 
-    # KORREKT: nächste Kundennummer ist current_number + 1
     next_customer_number = current_number + 1 if current_number < next_number else "-"
 
     return render_template(
         "admin.html",
         current_number=current_number,
         next_customer_number=next_customer_number,
-        next_free_number=next_number,  # zur Info für Admin
+        next_free_number=next_number,
     )
 
 
@@ -59,10 +66,6 @@ def next_customer():
     return redirect(url_for("admin"))
 
 
-# -------------------------------------------------
-# Starten
-# -------------------------------------------------
 if __name__ == "__main__":
-
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
