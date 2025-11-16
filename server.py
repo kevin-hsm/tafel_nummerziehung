@@ -60,8 +60,15 @@ def home():
 # -------------------------------------------------
 @app.route("/customer")
 def customer():
-    current_number, _ = get_numbers()
+    current_number, next_number = get_numbers()
+    
+    # Prüfen, ob die gespeicherte Nummer noch gültig ist
+    if 'ticket' in session:
+        if session['ticket'] >= next_number:
+            session.pop('ticket', None)  # alte Nummer löschen
+    
     return render_template("customer.html", current_number=current_number)
+
 
 
 @app.route("/take_number")
@@ -118,11 +125,14 @@ def next_customer():
     return redirect(url_for("admin"))
 
 
+from flask import session
+
 @app.route("/reset")
 def reset():
-    """Setzt Zähler zurück"""
+    """Setzt Zähler zurück und löscht die Session des aktuellen Kunden"""
     with lock:
         set_numbers(0, 1)
+    session.pop('ticket', None)  # Session des aktuellen Benutzers löschen
     return redirect(url_for("admin"))
 
 
