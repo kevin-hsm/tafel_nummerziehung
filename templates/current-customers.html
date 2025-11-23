@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aktuelle Nummer</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #1a1a1a;
+            color: #ffffff;
+            margin: 0;
+            overflow: hidden;
+        }
+        .container {
+            text-align: center;
+        }
+        h1 {
+            font-size: 4rem; /* 4 mal so groß wie Standard */
+            font-weight: 300;
+            color: #aaa;
+            margin: 0;
+        }
+        /* Die Nummer selbst */
+        #current-number {
+            font-size: 25rem; /* 25 mal so groß! */
+            font-weight: 700;
+            color: #f0f0f0;
+            line-height: 1.1;
+            /* Animation für den Zahlenwechsel */
+            transition: all 0.3s ease-in-out;
+        }
+        /* Kleine Animation, wenn sich die Zahl ändert */
+        .number-changed {
+            transform: scale(1.1);
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>NÄCHSTE NUMMER</h1>
+        <!-- Die aktuelle Nummer wird hier angezeigt -->
+        <div id="current-number">{{ current_number }}</div>
+    </div>
+
+    <!-- Socket.IO Client-Bibliothek laden -->
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script>
+        // Beim Laden der Seite mit dem Socket.IO-Server verbinden
+        const socket = io();
+
+        // Finde das Element, das die Nummer anzeigt
+        const numberElement = document.getElementById('current-number');
+
+        // Diese Funktion wird aufgerufen, wenn das 'number_update'-Event vom Server kommt
+        socket.on('number_update', function(data) {
+            console.log('Update erhalten!', data);
+            
+            // 1. Setze die neue Nummer
+            numberElement.textContent = data.current_number;
+
+            // 2. Füge eine kurze CSS-Animation hinzu
+            numberElement.classList.add('number-changed');
+            
+            // 3. Entferne die Animations-Klasse nach kurzer Zeit wieder
+            setTimeout(() => {
+                numberElement.classList.remove('number-changed');
+            }, 300); // Muss zur CSS-Transition-Dauer passen
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <!-- Wichtig für mobile Geräte, damit die Seite korrekt skaliert wird -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR-Code</title>
+    <style>
+        /* Einfaches Styling, damit es auf Mobilgeräten besser aussieht */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 90vh;
+            background-color: #f4f4f9;
+            color: #333;
+            text-align: center;
+        }
+        h1 {
+            font-weight: 500;
+        }
+        /* Der QR-Code-Container */
+        #qrcode {
+            margin-top: 20px;
+            /* Fügt einen einfachen Rahmen hinzu */
+            border: 1px solid #ddd;
+            padding: 10px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            /* Stellt sicher, dass das Bild darin nicht überläuft */
+            display: inline-block;
+        }
+        #qrcode img {
+            /* Stellt sicher, dass das Bild korrekt angezeigt wird */
+            display: block;
+        }
+        p {
+            font-size: 0.9rem;
+            color: #555;
+            word-break: break-all; /* Bricht die URL bei Bedarf um */
+            max-width: 90%;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>QR-Code zum Scannen:</h1>
+
+    <!-- Der QR-Code wird hier als Bild (img) eingefügt -->
+    <div id="qrcode"></div>
+
+    <p>Bitte diesen QR-Code einscannen, um ihre persönliche Nummer zu erhalten</p>
+
+    <!-- QR-Code-Bibliothek laden -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+
+    <script>
+        // Die URL aus Flask sicher in eine Variable namens 'targetUrl' laden.
+        const targetUrl = {{ url|tojson }};
+        
+        // Zur Kontrolle in der Browser-Konsole ausgeben
+        console.log("URL für QR-Code =", targetUrl);
+
+        // Finde das <div>-Element, in das der QR-Code gezeichnet werden soll
+        const qrCodeElement = document.getElementById("qrcode");
+
+        // *** KORREKTUR: ***
+        // Wir verwenden QRCode.toDataURL, um eine Bild-URL zu generieren,
+        // und fügen dann manuell ein <img>-Element hinzu.
+        // Dies vermeidet Probleme mit `toCanvas` und <div>-Elementen
+        // und löst den Syntaxfehler, der durch die falsche Funktionssignatur verursacht wurde.
+        QRCode.toDataURL(
+            targetUrl, // Die zu kodierende URL
+            { 
+                width: 280, // Größe des QR-Codes
+                margin: 2   // Kleiner Rand
+            }, 
+            function (error, url) {
+                // Die Callback-Funktion erhält (error, url)
+                if (error) {
+                    // Falls ein Fehler auftritt, in der Konsole loggen
+                    console.error("Fehler beim Erstellen des QR-Codes:", error);
+                    qrCodeElement.textContent = "Fehler beim Erstellen des QR-Codes.";
+                } else {
+                    // Wenn es klappt, ein <img>-Element erstellen
+                    console.log("QR-Code erfolgreich als Data-URL erstellt!");
+                    const img = document.createElement('img');
+                    img.src = url; // Die generierte Data-URL als Quelle setzen
+                    
+                    // Das <div> leeren (falls alter Inhalt vorhanden) und das Bild einfügen
+                    qrCodeElement.innerHTML = ''; 
+                    qrCodeElement.appendChild(img);
+                }
+            }
+        );
+
+        // Automatisches Neuladen alle 40 Sekunden, um einen neuen Token zu erhalten
+        // (Der alte Token ist 60s gültig, 40s ist ein gutes Intervall)
+        setInterval(() => {
+            console.log("Seite wird für neuen QR-Token neu geladen...");
+            location.reload();
+        }, 40000);
+    </script>
+</body>
+</html>
